@@ -1,0 +1,28 @@
+.DS_Store
+
+# Local secrets
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Python cache/build noise
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local temp/runtime artifacts
+tmp/
+
+# Generated outputs
+output/
+

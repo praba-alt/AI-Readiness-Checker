@@ -1,0 +1,63 @@
+{
+  "sites": [
+    {
+      "domain": "trailberg.com",
+      "label": "Trailberg",
+      "brand_aliases": ["trailberg"],
+      "visibility_sheet": "Trailberg_Visibility Tracker",
+      "visibility_report_sheet": "Trailberg"
+    },
+    {
+      "domain": "lorenzo.world",
+      "label": "Lorenzo",
+      "brand_aliases": ["lorenzo"],
+      "visibility_sheet": "Lorenzo_Visibility Tracker",
+      "visibility_report_sheet": "Lorenzo"
+    },
+    {
+      "domain": "dreamisfree.com",
+      "label": "Dream Is Free",
+      "brand_aliases": ["dreamisfree", "dream is free"],
+      "visibility_sheet": "Dream Is Free_Visibility Tracke",
+      "visibility_report_sheet": "Dreamisfree"
+    }
+  ],
+  "audit": {
+    "ai_bots": [
+      "GPTBot",
+      "ChatGPT-User",
+      "OAI-SearchBot",
+      "Google-Extended",
+      "CCBot",
+      "ClaudeBot",
+      "anthropic-ai",
+      "PerplexityBot",
+      "Bytespider"
+    ],
+    "mcp_paths": [
+      "/.well-known/mcp.json",
+      "/.well-known/mcp/manifest.json",
+      "/mcp",
+      "/api/mcp"
+    ],
+    "mcp_rpc_paths": [
+      "/.well-known/mcp/rpc",
+      "/mcp/rpc",
+      "/rpc",
+      "/api/mcp/rpc"
+    ],
+    "sample_sizes": {
+      "products": 8,
+      "collections": 5,
+      "content": 5
+    },
+    "clothing_attribute_keywords": {
+      "fabric": ["fabric", "material", "cotton", "polyester", "nylon", "fleece", "wool", "shell", "blend"],
+      "fit": ["fit", "oversized", "slim", "relaxed", "regular fit", "boxy", "tailored"],
+      "weather": ["waterproof", "water resistant", "breathable", "windproof", "rain", "cold weather", "winter", "lightweight"],
+      "style": ["streetwear", "outdoor", "casual", "performance", "technical", "minimal", "graphic", "layering"],
+      "care": ["machine wash", "wash care", "care instructions", "do not tumble dry", "cold wash"],
+      "occasion": ["hiking", "running", "gym", "everyday", "travel", "commute", "lifestyle"]
+    }
+  }
+}
