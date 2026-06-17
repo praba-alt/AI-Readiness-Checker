@@ -1040,6 +1040,14 @@ def build_consolidated_actions(site_results: List[Dict[str, Any]], site_result_m
         factor = scope / baseline_sites
         return (low * factor, high * factor)
 
+    def round_half(value: float) -> float:
+        return round(value * 2.0) / 2.0
+
+    def fmt_days(value: float) -> str:
+        if float(value).is_integer():
+            return str(int(value))
+        return f"{value:.1f}".rstrip("0").rstrip(".")
+
     def action_item(
         key: str,
         action: str,
@@ -1055,18 +1063,19 @@ def build_consolidated_actions(site_results: List[Dict[str, Any]], site_result_m
     ) -> Dict[str, Any]:
         dev_low, dev_high = scaled(dev_low, dev_high, scope_sites)
         qa_low, qa_high = scaled(qa_low, qa_high, scope_sites)
-        dev_days = int(round((dev_low + dev_high) / 2.0))
-        qa_days = int(round((qa_low + qa_high) / 2.0))
-        estimate_days = dev_days + qa_days
+        dev_days = round_half((dev_low + dev_high) / 2.0)
+        qa_days = max(0.5, round_half((qa_low + qa_high) / 2.0))
+        estimate_days = round_half(dev_days + qa_days)
 
         return {
             "key": key,
             "action": action,
             "domains": domains,
             "priority": priority,
-            "estimate": f"{estimate_days} mandays approx",
-            "estimate_basis": f"Dev {dev_days} + QA {qa_days}",
+            "estimate": f"{fmt_days(estimate_days)} mandays approx",
+            "estimate_basis": f"Dev {fmt_days(dev_days)} + QA {fmt_days(qa_days)}",
             "estimate_days": estimate_days,
+            "site_count": total_sites,
             "expected_outcome": expected_outcome,
             "bucket": bucket,
         }
@@ -1135,7 +1144,7 @@ def build_consolidated_actions(site_results: List[Dict[str, Any]], site_result_m
             2.0,
             "Stronger recommendation pathways and better cross-sell teaching signals.",
             "core",
-            3,
+            len(site_results),
         ),
         action_item(
             "homepage_entity_schema",
@@ -1174,39 +1183,53 @@ def build_consolidated_actions(site_results: List[Dict[str, Any]], site_result_m
             15.0,
             "Adds the editable advisory layer that Shopify's native MCP does not provide by default.",
             "custom_mcp",
-            3,
+            len(site_results),
         ),
     ]
 
-    forced_breakups = {
-        "deep_pdp_schema": (14, 11, 3),
-        "collection_semantics": (11, 8, 3),
-        "apparel_fields": (15, 12, 3),
-        "pdp_faq_support": (15, 12, 3),
-        "related_products": (9, 7, 2),
-        "homepage_entity_schema": (8, 6, 2),
-        "native_mcp": (3, 2, 1),
-        "custom_mcp": (85, 68, 17),
-    }
-    for item in actions:
-        if item["key"] in forced_breakups:
-            estimate_days, dev_days, qa_days = forced_breakups[item["key"]]
-            item["estimate"] = f"{estimate_days} mandays approx"
-            item["estimate_basis"] = f"Dev {dev_days} + QA {qa_days}"
-            item["estimate_days"] = estimate_days
+    # Keep explicitly approved breakup only for the 4-site plan.
+    if total_sites == 4:
+        forced_breakups = {
+            "deep_pdp_schema": (14, 11, 3),
+            "collection_semantics": (11, 8, 3),
+            "apparel_fields": (15, 12, 3),
+            "pdp_faq_support": (15, 12, 3),
+            "related_products": (9, 7, 2),
+            "homepage_entity_schema": (8, 6, 2),
+            "native_mcp": (3, 2, 1),
+            "custom_mcp": (85, 68, 17),
+        }
+        for item in actions:
+            if item["key"] in forced_breakups:
+                estimate_days, dev_days, qa_days = forced_breakups[item["key"]]
+                item["estimate"] = f"{estimate_days} mandays approx"
+                item["estimate_basis"] = f"Dev {dev_days} + QA {qa_days}"
+                item["estimate_days"] = estimate_days
 
     return actions
 
 
 def consolidated_action_effort_summary(actions: List[Dict[str, Any]]) -> List[Tuple[str, str, str]]:
-    core_days = 75
-    custom_days = 85
-    total_days = 160
+    def fmt_days(value: float) -> str:
+        if float(value).is_integer():
+            return str(int(value))
+        return f"{value:.1f}".rstrip("0").rstrip(".")
+
+    site_count = max((int(item.get("site_count", 0)) for item in actions), default=0)
+    if site_count == 4:
+        core_days = 75
+        custom_days = 85
+        total_days = 160
+    else:
+        core_days = sum(float(item.get("estimate_days", 0)) for item in actions if item.get("bucket") == "core")
+        custom_days = sum(float(item.get("estimate_days", 0)) for item in actions if item.get("bucket") == "custom_mcp")
+        other_days = sum(float(item.get("estimate_days", 0)) for item in actions if item.get("bucket") not in {"core", "custom_mcp"})
+        total_days = core_days + custom_days + other_days
 
     return [
-        ("Core storefront-readiness effort", f"{core_days} mandays approx", "Includes implementation plus QA or re-test time across the storefront workstreams."),
-        ("Custom MCP effort", f"{custom_days} mandays approx", "Includes custom MCP design, implementation, QA, and pilot validation."),
-        ("Total effort including custom MCP", f"{total_days} mandays approx", "Combined delivery estimate including implementation and QA or re-test time."),
+        ("Core storefront-readiness effort", f"{fmt_days(core_days)} mandays approx", "Includes implementation plus QA or re-test time across the storefront workstreams."),
+        ("Custom MCP effort", f"{fmt_days(custom_days)} mandays approx", "Includes custom MCP design, implementation, QA, and pilot validation."),
+        ("Total effort including custom MCP", f"{fmt_days(total_days)} mandays approx", "Combined delivery estimate including implementation and QA or re-test time."),
     ]
 
 

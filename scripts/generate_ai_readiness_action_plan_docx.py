@@ -257,7 +257,7 @@ def make_timeline_table(document: Document) -> None:
         set_cell_text(cells[2], outcome)
 
 
-def make_custom_mcp_table(document: Document, relevant_brands: str) -> None:
+def make_custom_mcp_table(document: Document, relevant_brands: str, effort_label: str) -> None:
     table = document.add_table(rows=1, cols=4)
     apply_table_style(table)
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -276,7 +276,7 @@ def make_custom_mcp_table(document: Document, relevant_brands: str) -> None:
         cells[2],
         "Keep Shopify's native MCP for catalog search, cart operations, product lookup, and policy answers.\nUse a separate custom MCP only for logic Shopify's native MCP does not cover well enough, such as recommendation explanations, product comparison, sizing or fit interpretation, and brand guidance.\nDo not rebuild standard catalog or cart tools inside the custom MCP if Shopify's native MCP already handles them.",
     )
-    set_cell_text(cells[3], "50-55 mandays approx (Dev 40-44 + QA 10-11)")
+    set_cell_text(cells[3], effort_label)
 
 
 def build_document(
@@ -296,6 +296,12 @@ def build_document(
         if label not in site_labels:
             site_labels.append(label)
     relevant_brands = ", ".join(site_labels) if site_labels else "the audited brands"
+    custom_action = next((item for item in consolidated_actions if item.get("key") == "custom_mcp"), None)
+    custom_effort_label = (
+        f'{custom_action["estimate"]} ({custom_action["estimate_basis"]})'
+        if custom_action
+        else "TBD"
+    )
 
     if template_docx and template_docx.exists():
         document = Document(template_docx)
@@ -325,8 +331,7 @@ def build_document(
     p0_count = sum(1 for item in cross_site if item["priority"] == "P0")
     p1_count = sum(1 for item in cross_site if item["priority"] == "P1")
     workdays_per_week = 5
-    project_weeks = 36
-    project_capacity = workdays_per_week * project_weeks
+    project_capacity = 45 * max(1, len(findings_by_site))
     effort_map = {label: value for label, value, _basis in effort_summary}
     summary_rows = [
         ("Sites reviewed", str(len(findings_by_site))),
@@ -362,7 +367,7 @@ def build_document(
 
     if include_custom_mcp_note:
         add_heading(document, "Strategic Build Included In This Plan: Custom MCP", 1)
-        make_custom_mcp_table(document, relevant_brands)
+        make_custom_mcp_table(document, relevant_brands, custom_effort_label)
 
     add_heading(document, "Site-by-Site Action Plan", 1)
     for domain, items in findings_by_site.items():

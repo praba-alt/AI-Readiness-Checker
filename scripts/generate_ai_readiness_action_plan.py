@@ -631,8 +631,7 @@ def render_markdown(
     p0_count = sum(1 for item in cross_site if item["priority"] == "P0")
     p1_count = sum(1 for item in cross_site if item["priority"] == "P1")
     workdays_per_week = 5
-    project_weeks = 36
-    project_capacity = workdays_per_week * project_weeks
+    project_capacity = 45 * max(1, total_sites)
     effort_map = {label: value for label, value, _basis in effort_summary}
     core_effort = effort_map.get("Core storefront-readiness effort", "-")
     custom_effort = effort_map.get("Custom MCP effort", "-")
